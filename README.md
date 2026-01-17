@@ -52,7 +52,53 @@ Ensure you have the following libraries installed in your Arduino IDE:
 * `SoftwareSerial`
 
 ### 2. Configuration
-Open the `.ino` file and update the phone number to your own:
+Open the  `.ino` file and update the phone number to your own:
 ```cpp
 SIM800L.println("AT+CMGS=\"+911234567890\""); // Replace with your number
+```
+
+### 3. Power Note ⚠️
+The SIM800L module requires high current spikes (up to 2A) during SMS transmission. It is highly recommended to use a separate 3.7V - 4.2V battery for the GSM module and connect the grounds (GND) to the Arduino.
+
+
+#⚙️ How it Works
+1. Scanning: The robot monitors the environment via IR1 (Left), IR2 (Right), and IR3 (Center).
+2. Tracking: If fire is detected on the sides, the robot pivots toward it.
+3. Verification: Once the center sensor (IR3) triggers, the robot stops and checks if the Object Temperature is > 33°C.
+4. Action: If confirmed, the pump activates, the buzzer sounds, the nozzle sweeps, and an SMS is sent to the user.
+5. Reset: The system enters a 15-second cooldown before it is allowed to send another SMS alert.
+
+
+---
+
+## 🏗️ System Architecture
+
+This diagram illustrates how the sensors, microcontroller, and actuators interact to form the firefighting system:
+
+
+
+```mermaid
+graph TD
+    subgraph Input_Sensors
+        IR1[IR Left] --> Arduino
+        IR2[IR Right] --> Arduino
+        IR3[IR Center] --> Arduino
+        MLX[MLX90614 Thermal Sensor] -->|I2C| Arduino
+    end
+
+    subgraph Processing_Unit
+        Arduino[Arduino Uno/Nano]
+    end
+
+    subgraph Actuators_Outputs
+        Arduino -->|PWM| Servo[Nozzle Servo]
+        Arduino -->|Digital| Relay[Water Pump Relay]
+        Arduino -->|H-Bridge| L298N[Motor Driver]
+        Arduino -->|Digital| Buzzer[Alarm]
+    end
+
+    subgraph Communication
+        Arduino -->|UART| SIM800L[GSM Module]
+        SIM800L --> SMS[Remote SMS Alert]
+    end
 
